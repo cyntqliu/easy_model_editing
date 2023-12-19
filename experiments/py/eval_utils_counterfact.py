@@ -136,7 +136,7 @@ def test_batch_prediction(
     model,
     tok,
     prefixes: typing.List[str],
-    which_correct: str,
+    which_correct: typing.List[str],
     target_new: str,
     target_true: str,
     out_file: typing.Optional[Path] = None,
@@ -169,7 +169,10 @@ def test_batch_prediction(
         cur_len = choice_a_len if i % 2 == 0 else choice_b_len
 
         # Compute suffix probabilities
-        for j in range(cur_len):
+        # logits.shape[0] = 2 * len(prefixes)
+        # each prefix is used twice; this section computes probabilities
+        # for both the new (a_tok) and true (b_tok) tokens
+        for j in range(cur_len): 
             cur_tok = (a_tok if i % 2 == 0 else b_tok)[j]
             probs[i] += -torch.nn.functional.log_softmax(
                 logits[i, prefix_lens[i // 2] + j - 1, :], dim=0

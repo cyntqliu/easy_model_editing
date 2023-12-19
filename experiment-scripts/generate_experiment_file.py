@@ -1,11 +1,36 @@
 #!/usr/bin/env python3
-"""Script for generating experiments.txt""" 
+"""Script for generating experiments.txt"""
+import argparse
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--models",
+    nargs='+',
+    choices=["gpt2-medium", "gpt2-xl", "EleutherAI/gpt-j-6B", "EleutherAI/gpt-neox-20b"],
+    required=True,
+    help=f"Which models to edit. Choices: ['gpt2-medium', 'gpt2-xl', 'EleutherAI/gpt-j-6B', 'EleutherAI/gpt-neox-20b'],"
+)
+parser.add_argument(
+    '--algs',
+    nargs='+',
+    choices=["ROME","FT","MEND","MEMIT","IDENTITY"],
+    help=f"Which algorithms to evaluate. Choices: ['ROME', 'FT', 'MEND', 'MEMIT', 'IDENTITY']"
+)
+parser.add_argument(
+    "--split_into",
+    default=125,
+    type=int,
+)
+args = parser.parse_args()
+
+
+# generate experiment script calls
 examples = 22000
-split_into = 125
+split_into = args.split_into
 
-models = ["EleutherAI/gpt-j-6B"]  # ["gpt2-medium", "gpt2-xl", "EleutherAI/gpt-j-6B", "EleutherAI/gpt-neox-20b"]
-ALGS = ["ROME","FT", "MEMIT", "IDENTITY"]  # ["ROME","FT", "MEND", "MEMIT", "IDENTITY"]
+models = args.models
+ALGS = args.algs
 
 hparams_ROME = {"gpt2-medium":"gpt2-medium.json", "gpt2-xl":"gpt2-xl.json", "EleutherAI/gpt-j-6B":"EleutherAI_gpt-j-6B.json", "EleutherAI/gpt-neox-20b":"EleutherAI_gpt-neox-20b.json"}
 hparams_MEND = {"gpt2-xl":"gpt2-xl_CF.json", "EleutherAI/gpt-j-6B":"EleutherAI_gpt-j-6B_CF.json"}
@@ -44,7 +69,9 @@ for model in models:
             f"--start_index {start_i} "
         )
 
-        call = "cd git/specificityplus" + " && " + expt_call
+        call = expt_call
 
         print(call, file=output_file)
+    print (f"Wrote {len(start_indexes)} commands to {file_path}")
     output_file.close()
+
