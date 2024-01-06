@@ -26,15 +26,6 @@ if not ROOT_DIR:
 REMOTE_ROOT_URL = data["REMOTE_ROOT_URL"]
 SEED = data["SEED"]
 
-for var, path in (
-        ("RESULTS_DIR", RESULTS_DIR),
-        ("DATA_DIR", DATA_DIR),
-        ("STATS_DIR", STATS_DIR),
-        ("HPARAMS_DIR", HPARAMS_DIR),
-        ("KV_DIR", KV_DIR),
-):
-    print(f"{var}: {path.resolve()}")
-
 # model, algorithm, and dataset choices available as CLI args across different scripts
 MODELS = ["gpt2-medium", "gpt2-large", "gpt2-xl", "EleutherAI/gpt-j-6B", "EleutherAI/gpt-neox-20b"]
 ALGOS = ["MEMIT", "ROME", "FT", "MEND", "IDENTITY"]
