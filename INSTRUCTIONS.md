@@ -7,7 +7,7 @@ Note: Some of the python commands might need to be prepended by `PYTHONPATH=$PYT
 # Running MEMIT experiments
 
 ## Step 0: download git and setup environment
-1) git clone this repo https://github.com/jas-ho/specificityplus
+1) git clone this repo https://github.com/cyntqliu/easy_model_editing and cd to the repo
 2) Setup conda enviroment: conda env create -f scripts/memit.yml
 3) conda activate memit
 
@@ -18,11 +18,12 @@ Note: Some of the python commands might need to be prepended by `PYTHONPATH=$PYT
 4) python setup_data/download_models.py --models gpt2-xl
 
 ## Step 2: precompute layer stats
-1) python collect_layer_stats.py --model_name gpt2-medium --layers 8 --to_collect mom2 --sample_size 10000 --precision float32 --download 1 --cpu
+1) If CUDA is available, run `python collect_layer_stats.py --model_name gpt2-xl --layers 8 --to_collect mom2 --sample_size 100000 --precision float32 --download 1`
+2) Otherwise, add the `--cpu` flag and reduce the sample size
 
 ## Step 3: Run experiments
-1) python experiment-scripts/generate_experiment_file.py --models gpt2-xl --algs MEMIT FT IDENTITY --split_into 125
+1) python run_eval.py --models gpt2-xl --algs MEMIT FT IDENTITY --split_into 125
 2) Find lines to run in experiment-scripts/exp_gpt2xl.txt. Run one
 3) Results for gpt2-xl are stored in results/
 
-IF everything works for gpt2-xl, feel free to change the models by changing the --models flag in `python setup_data/download_models.py`, and rerunning steps 2 and 3 for said model.
+IF everything works for gpt2-xl, feel free to change the models by changing the --models flag in the `python setup_data/download_models.py` command, and rerunning steps 2 and 3 for said model.
