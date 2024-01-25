@@ -12,7 +12,7 @@ Note: Some of the python commands might need to be prepended by `PYTHONPATH=$PYT
 3) conda activate memit
 
 ## Step 1: download models + data
-1) set ROOT_DIR by exporting an environment variable: export ROOT_DIR="/disk/scratch/s1785649/specificityplus/" or similar
+1) set ROOT_DIR by exporting an environment variable: export ROOT_DIR="<desired_path_to_artifacts>"
 2) python setup_data/download_data.py
 3) python setup_data/download_hfdata.py
 4) python setup_data/download_models.py --models gpt2-xl
@@ -22,8 +22,9 @@ Note: Some of the python commands might need to be prepended by `PYTHONPATH=$PYT
 2) Otherwise, add the `--cpu` flag and reduce the sample size
 
 ## Step 3: Run experiments
-1) python run_eval.py --models gpt2-xl --algs MEMIT FT IDENTITY --split_into 125
-2) Find lines to run in experiment-scripts/exp_gpt2xl.txt. Run one
-3) Results for gpt2-xl are stored in results/
+1) Restore ROOT_DIR: export ROOT_DIR="<path_to_your_easy_model_edit_directory>"
+2) Run `python experiment-scripts/generate_experiment_file.py --models gpt2-xl --algs MEMIT FT IDENTITY --split_into 125` to generate experiment commands
+3) Find lines to run in experiment-scripts/exp_gpt2xl.txt. Run one
+4) Results for gpt2-xl are stored in results/
 
 IF everything works for gpt2-xl, feel free to change the models by changing the --models flag in the `python setup_data/download_models.py` command, and rerunning steps 2 and 3 for said model.

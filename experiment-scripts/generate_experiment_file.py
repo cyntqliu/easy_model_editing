@@ -57,7 +57,7 @@ for model in models:
     hparams_fnames = [hparams_dict[alg][model] for alg in ALGS]
     hparams_fnames = " ".join(hparams_fnames)
 
-    base_call = (f"python experiments/e2e.py --model_name {model} \
+    base_call = (f"python run_eval.py --model_name {model} \
 --alg_names {alg_names} --hparams_fnames {hparams_fnames} \
 --ds_name cf --verbose --dataset_size_limit {dataset_size}")
 
