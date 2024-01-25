@@ -112,6 +112,13 @@ def process_pararel_patterns(
     2. Replacing the subject indicator with `{}`
     3. Removing everything after the target indicator
     4. Removing duplicates resulting from step 3
+
+    Args:
+        paraphrases: List[str] of paraphrases for a specific relation in ParaRel
+        subject: str token indicating the subject in each paraphrase in `paraphrases`
+        target: str token indicating the target in each paraphrase in `paraphrases`
+
+    returns: List[str], 
     '''
     reformatted_paraphrases = []
     for p in paraphrases:
@@ -125,14 +132,67 @@ def process_pararel_patterns(
     return reformatted_paraphrases
 
 
-def get_ai_paraphrases(request: Dict, max_sentences: int) -> List[str]:
+def get_ai_paraphrases(request: Dict, max_sentences: int, seed: int=1234) -> List[str]:
     '''
     Given a request, use an NLU library to generate up to max_sentences paraphrases
+
+    Args:
+        request: Dict[str], the edit request from which we want to generate paraphrases
+        max_sentences: int, the maximum number of paraphrases to generate
+
+    returns: List[str], empty if no paraphrases were found
     '''
-    return []
+    from parrot import Parrot
+    import torch
+
+    # set random state
+    use_gpu = torch.cuda.is_available()
+    def random_state(s):
+        torch.manual_seed(s)
+        if use_gpu:
+            torch.cuda.manual_seed_all(s)
+    random_state(seed)
+
+    print ("Not enough ParaRel relations found, loading model for paraphrasing...")
+    parrot = Parrot()
+    target = request["target_new"]["str"]
+    full_relation = request["prompt"].format(request["subject"]) + " " + target
+    full_relation = full_relation.lower()
+
+    # use Parrot to generate paraphrases
+    parrot_paraphrases = parrot.augment(
+        input_phrase=full_relation,
+        use_gpu=use_gpu,
+        max_return_phrases=2*max_sentences
+    )
+    parrot_paraphrases = [pp[0] for pp in parrot_paraphrases]
+
+    # filter all paraphrases for explicit use of both subject and target,
+    # their relative ordering required by MEMIT, and target being the last substring
+    paraphrases = []
+    num_paraphrases = 0
+    for pp in parrot_paraphrases:
+        if (
+            request["subject"].lower() in pp and \
+            target.lower() in pp and \
+            pp != full_relation
+        ):
+            target_index = pp.rindex(target.lower())
+            if len(pp[target_index+len(target):]) == 0:
+                # fix capitalization before adding to `paraphrases`
+                pre_target_str = pp[:target_index-1]
+                pre_target_str = pre_target_str.replace(request["subject"].lower(), request["subject"])
+                pre_target_str = pre_target_str.replace(target.lower(), target)
+
+                paraphrases.append(pre_target_str)
+                num_paraphrases += 1
+        
+        if num_paraphrases >= max_sentences: break
+
+    return paraphrases
 
 
-def get_paraphrase(request: Dict, max_sentences: int=10, use_nlp: bool=True) -> List[str]:
+def get_paraphrase(request: Dict, max_sentences: int=3, use_nlp: bool=True) -> List[str]:
     '''
     Given a request with keys "prompt", "target_new", and "subject",
     generating paraphrased sentences with the same subject and target_new,
@@ -153,19 +213,34 @@ def get_paraphrase(request: Dict, max_sentences: int=10, use_nlp: bool=True) -> 
     subject_indicator = "[X]"
     target_indicator = "[Y]"
     paraphrases = []
+
+    # reformat the request so it matches Pararel for easier searching
+    pararel_format_request = request["prompt"].format(request["subject"]) + " " + request["target_new"]["str"]
+    pararel_format_request = pararel_format_request.replace(
+        request["subject"], subject_indicator
+    )
+    pararel_format_request = pararel_format_request.replace(
+        request["target_new"]["str"], target_indicator
+    )
+    pararel_format_request += '.'
+    
+    # find paraphrases in ParaRel
     for f in os.listdir(pararel_dir):
         if f.endswith('.jsonl'):
             with jsonlines.open(os.path.join(pararel_dir, f)) as rdr:
                 all_paraphrases_f = [pattern["pattern"] for pattern in rdr]
 
-                # process patterns so they match the request format
-                all_paraphrases_f = process_pararel_patterns(
-                    all_paraphrases_f, subject_indicator, target_indicator,
-                )
+                if pararel_format_request in all_paraphrases_f:
+                    # process matching ParaRel patterns so they match the request format
+                    all_paraphrases_f = process_pararel_patterns(
+                        all_paraphrases_f, subject_indicator, target_indicator,
+                    )
+                    with_subject = [
+                        p.format(request["subject"]) for p in all_paraphrases_f if p != request["prompt"]
+                    ]
+                    paraphrases.extend(with_subject)
 
-                if request["prompt"] in all_paraphrases_f:
-                    paraphrases.extend([p for p in all_paraphrases_f if p != request["prompt"]])
-
+    # use NLP to find more paraphrases, if requested
     paraphrases = paraphrases[:max_sentences]
     if use_nlp and len(paraphrases) < max_sentences:
         paraphrases.extend(get_ai_paraphrases(request, max_sentences-len(paraphrases)))
