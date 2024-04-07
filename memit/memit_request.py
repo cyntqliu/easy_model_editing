@@ -22,7 +22,8 @@ def extract_entity_and_relations(doc, **kwargs):
 
 def get_request(docs, whole_file=False, **kwargs):
     '''
-    Builds the request object used for model editing. An example request is
+    Builds the request object used for model editing, as well as
+    paraphrase and neighborhood prompts for eval. An example request is
 
     request = {
         "prompt": "{} plays the sport of", // relation
@@ -35,13 +36,13 @@ def get_request(docs, whole_file=False, **kwargs):
         },
     }
 
-    where request is used in the following structure:
+    where `request` is used in the following structure:
     
     example = {
         "case_id": int,
         "requested_rewrite": request,
-        "paraphrase_prompts": [...], // list of paraphrase prompts
-        "neighborhood_prompts": [...], // list of neighborhood prompts
+        "paraphrase_prompts": [...], // list of paraphrase prompts, in `eval_prompts`
+        "neighborhood_prompts": [...], // list of neighborhood prompts, in `eval_prompts`
         "generation_prompts": [...], // list of generation prompts
     }
     '''

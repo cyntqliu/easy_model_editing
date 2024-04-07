@@ -164,5 +164,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Experiment commands
+# Experiment commands and experiments
 experiment-scripts/*.txt
+experiments/*_experiment.py

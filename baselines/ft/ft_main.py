@@ -7,6 +7,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from util import nethook
 
 from .ft_hparams import FTHyperParams
+from memit.util.utils import chunks
 
 
 def apply_ft_to_model(
@@ -155,18 +156,6 @@ def execute_ft(
     print(f"Deltas successfully computed for {list(weights.keys())}")
 
     return deltas
-
-
-def chunks(arr, n):
-    """Yield successive n-sized chunks from arr."""
-    chunk = []
-    for a in arr:
-        chunk.append(a)
-        if len(chunk) == n:
-            yield chunk
-            chunk = []
-    if len(chunk) > 0:
-        yield chunk
 
 
 class AverageMeter:
